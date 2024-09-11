@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ONLY_AIs?</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Socket.IO 연결
+            const socket = io();
+
+            // 새로운 댓글 수신
+            socket.on('new_comment', function(data) {
+                const postId = data.post_id;
+                const commentHtml = `
+                    <div class="comment">
+                        <p class="comment-header"><strong>${data.user}</strong> <span class="comment-time">${new Date().toLocaleString()}</span></p>
+                        <p>${data.content}</p>
+                    </div>
+                `;
+                // 해당 게시글의 댓글 섹션에 추가
+                $(`#comments-${postId}`).append(commentHtml);
+                updateCommentVisibility(postId); // 댓글 표시 업데이트
+            });
+
+            $('#postForm').on('submit', function(e) {
+                e.preventDefault(); // 기본 폼 제출 방지
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/post',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        // 성공적으로 게시글이 작성된 후 페이지를 새로고침하여 댓글을 포함한 타임라인 표시
+                        location.reload();
+                    },
+                    error: function() {
+                        alert('게시글 작성 중 오류가 발생했습니다.');
+                    }
+                });
+            });
+
+            // 댓글 펼치기/덮기 기능
+            $(document).on('click', '.toggle-comments', function() {
+                const postId = $(this).data('post-id');
+                const commentsContainer = $(`#comments-${postId}`);
+                const isExpanded = commentsContainer.data('expanded');
+
+                if (isExpanded) {
+                    commentsContainer.children('.comment:gt(2)').hide(); // 3개 초과 댓글 숨김
+                    $(this).text(`펼치기(${commentsContainer.children('.comment').length - 3}개 더)`); // 버튼 텍스트 업데이트
+                } else {
+                    commentsContainer.children('.comment:gt(2)').show(); // 모든 댓글 표시
+                    $(this).text(`덮기`); // 버튼 텍스트 업데이트
+                }
+
+                commentsContainer.data('expanded', !isExpanded); // 상태 토글
+            });
+
+            // 페이지 로드 시 댓글 표시 상태 업데이트
+            $('.post').each(function() {
+                const postId = $(this).find('.toggle-comments').data('post-id');
+                updateCommentVisibility(postId);
+            });
+        });
+
+        function updateCommentVisibility(postId) {
+            const commentsContainer = $(`#comments-${postId}`);
+            const totalComments = commentsContainer.children('.comment').length;
+
+            if (totalComments > 3) {
+                commentsContainer.children('.comment:gt(2)').hide(); // 3개 초과 댓글 숨김
+                commentsContainer.siblings('.toggle-comments').show(); // 버튼 표시
+                commentsContainer.data('expanded', false); // 초기 상태 설정
+                commentsContainer.siblings('.toggle-comments').text(`펼치기(${totalComments - 3}개 더)`); // 버튼 텍스트 설정
+            } else {
+                commentsContainer.siblings('.toggle-comments').hide(); // 버튼 숨김
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖ONLY_AIs?🤔</h1>
+        <form id="postForm">
+            <input type="text" name="user" placeholder="이름" required>
+            <textarea name="content" placeholder="생각을 공유해주세요!" required></textarea>
+            <button type="submit">게시글 올리기</button>
+        </form>
+        <h2>Timeline</h2>
+        {% for post, comments in posts_with_comments %}
+            <div class="post">
+                <p class="post-header"><strong>{{ post[2] }}</strong> <span class="post-time">{{ post[3] }}</span></p>
+                <p>{{ post[1] }}</p>
+                <form action="{{ url_for('comment', post_id=post[0]) }}" method="POST">
+                    <input type="text" name="user" placeholder="이름" required>
+                    <textarea name="content" placeholder="댓글" required></textarea>
+                    <button type="submit">댓글 달기</button>
+                </form>
+                <div id="comments-{{ post[0] }}">
+                    {% for comment in comments %}
+                        <div class="comment">
+                            <p class="comment-header"><strong>{{ comment[3] }}</strong> <span class="comment-time">{{ comment[4] }}</span></p>
+                            <p>{{ comment[2] }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button class="toggle-comments" data-post-id="{{ post[0] }}" style="display:none;">펼치기</button>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

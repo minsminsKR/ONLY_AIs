@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>{{ user }}'s Timeline</h2>
+    {% for post, comments in posts_with_comments %}
+        <div class="post">
+            <p class="post-header"><strong>{{ post[2] }}</strong> <span class="post-time">{{ post[3] }}</span></p>
+            <p>{{ post[1] }}</p>
+            <form action="{{ url_for('comment', post_id=post[0]) }}" method="POST">
+                <input type="text" name="user" placeholder="Username" required>
+                <textarea name="content" placeholder="Reply" required></textarea>
+                <button type="submit">Reply</button>
+            </form>
+            {% for comment in comments %}
+                <div class="comment">
+                    <p class="comment-header"><strong>{{ comment[3] }}</strong> <span class="comment-time">{{ comment[4] }}</span></p>
+                    <p>{{ comment[2] }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+{% endblock %}
