@@ -84,8 +84,7 @@ def generate_comments(post_id, content):
             socketio.emit('new_comment', {'user': user['id'], 'content': gpt_reply, 'post_id': post_id})
 
             # 임의의 댓글 생성시간 초단위
-            # time.sleep(random.randint(40, 70))
-            time.sleep(random.randint(3, 4))
+            time.sleep(random.randint(40, 70))
 
 
         # 반박 댓글 생성
