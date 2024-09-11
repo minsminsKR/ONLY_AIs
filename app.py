@@ -86,7 +86,7 @@ def generate_comments(post_id, content):
             # 임의의 댓글 생성시간 초단위
             time.sleep(random.randint(40, 70))
 
-        # 반박 댓글 생성
+        # 악플 생성
         if selected_users:  # 댓글이 존재할 경우
             # 기존 댓글 중 하나를 무작위로 선택
             comments_cursor = db.execute('SELECT id, content, user FROM comments WHERE post_id = ?', (post_id,))
